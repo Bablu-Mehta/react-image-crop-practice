@@ -1,6 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 
 const ImageCropper = () => {
+  const [imgSrc, setImgSrc] = useState("");
+  const onSelectFile = (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.addEventListener("load", () => {
+      console.log("inside lister");
+      const imageUrl = reader.result?.toString() || "";
+      console.log("image data url", imageUrl);
+      setImgSrc(imageUrl);
+    });
+    reader.readAsDataURL(file);
+  };
+
   return (
     <>
       <label className="block mb-3 w-fit">
@@ -8,10 +26,11 @@ const ImageCropper = () => {
         <input
           type="file"
           accept="image/*"
-          // onChange={onSelectFile}
+          onChange={onSelectFile}
           className="block w-full text-sm text-slate-500 file:mr-4 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:bg-gray-700 file:text-sky-300 hover:file:bg-gray-600"
         />
       </label>
+      {imgSrc && <div className="flex flex-col items-center"></div>}
     </>
   );
 };
