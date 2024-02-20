@@ -8,6 +8,10 @@ const Profile = () => {
   );
   const [modalOpen, setModalOpen] = useState(false);
 
+  const updateAvatar = (imgUrl) => {
+    avatarUrl.current = imgUrl;
+  };
+
   return (
     <div className="flex flex-col items-center pt-12">
       <div className="relative">
@@ -26,7 +30,12 @@ const Profile = () => {
       </div>
       <h2 className="text-white font-bold mt-6">Mack Aroney</h2>
       <p className="text-gray-500 text-xs mt-2">Software Engineer</p>
-      {modalOpen && <Modal closeModal={() => setModalOpen(false)} />}
+      {modalOpen && (
+        <Modal
+          updateAvatar={updateAvatar}
+          closeModal={() => setModalOpen(false)}
+        />
+      )}
     </div>
   );
 };

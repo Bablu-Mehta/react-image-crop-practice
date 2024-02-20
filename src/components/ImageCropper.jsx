@@ -1,10 +1,17 @@
-import React, { useState } from "react";
-import ReactCrop, { centerCrop, makeAspectCrop } from "react-image-crop";
+import React, { useRef, useState } from "react";
+import ReactCrop, {
+  centerCrop,
+  convertToPixelCrop,
+  makeAspectCrop,
+} from "react-image-crop";
+import setCanvasPreview from "../setCanvasPreview";
 
 const MIN_DIMENSION = 150;
 const ASPECT_RATIO = 1;
 
-const ImageCropper = () => {
+const ImageCropper = ({ updateAvatar, closeModal }) => {
+  const imgRef = useRef(null);
+  const previewCanvasRef = useRef(null);
   const [imgSrc, setImgSrc] = useState("");
   const [crop, setCrop] = useState();
   const [error, setError] = useState("");
@@ -17,26 +24,34 @@ const ImageCropper = () => {
 
     const reader = new FileReader();
     reader.addEventListener("load", () => {
-      console.log("inside lister");
+      const imageElement = new Image();
+      // console.log("inside lister");
       const imageUrl = reader.result?.toString() || "";
+      imageElement.src = imageUrl;
       // console.log("image data url", imageUrl);
+
+      imageElement.addEventListener("load", (e) => {
+        if (error) setError("");
+        const { naturalWidth, naturalHeight } = e.currentTarget;
+        if (naturalWidth < MIN_DIMENSION || naturalHeight < MIN_DIMENSION) {
+          setError("Image must be at least 150 X 150 pixels.");
+          return setImgSrc("");
+        }
+      });
+
       setImgSrc(imageUrl);
     });
     reader.readAsDataURL(file);
   };
 
   const onImageLoad = (e) => {
-    const { width, height, naturalWidth, naturalHeight } = e.currentTarget;
+    const { width, height } = e.currentTarget;
+    const cropWidthPercent = (MIN_DIMENSION / width) * 100;
 
-    if (naturalWidth < MIN_DIMENSION || naturalHeight < MIN_DIMENSION) {
-      setError("Image must be at least 150 X 150 pixels.");
-      setImgSrc("");
-      return;
-    }
     const crop = makeAspectCrop(
       {
         unit: "%",
-        width: 25,
+        width: cropWidthPercent,
       },
       ASPECT_RATIO,
       width,
@@ -71,13 +86,47 @@ const ImageCropper = () => {
             minWidth={MIN_DIMENSION}
           >
             <img
+              ref={imgRef}
               src={imgSrc}
               alt="Upload"
               style={{ maxHeight: "70vh" }}
               onLoad={onImageLoad}
             />
           </ReactCrop>
+          <button
+            className="text-white font-mono text-xs py-2 px-4 rounded-2xl mt-4 bg-sky-500 hover:bg-sky-600"
+            onClick={() => {
+              setCanvasPreview(
+                imgRef.current,
+                previewCanvasRef.current,
+                convertToPixelCrop(
+                  crop,
+                  imgRef.current.width,
+                  imgRef.current.height
+                )
+              );
+              const dataUrl = previewCanvasRef.current.toDataURL();
+              updateAvatar(dataUrl);
+              closeModal();
+            }}
+          >
+            Crop Image
+          </button>
         </div>
+      )}
+
+      {crop && (
+        <canvas
+          ref={previewCanvasRef}
+          className="mt-4"
+          style={{
+            display: "none",
+            border: "1px solid black",
+            objectFit: "contain",
+            width: 150,
+            height: 150,
+          }}
+        />
       )}
     </>
   );
